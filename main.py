@@ -1,36 +1,39 @@
+import asyncio
 import os
-from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.enums import ParseMode
+from aiogram.types import Message
+
+# Читання токена з секретів Render
+TOKEN = os.environ.get("BOT_TOKEN")
+
+# Ініціалізація бота та диспетчера
+bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
+dp = Dispatcher()
 
 # Команда /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Привіт! Напиши щось про друк, і я зреагую!")
+@dp.message(Command("start"))
+async def cmd_start(message: Message):
+    await message.answer("👋 Привіт! Я бот-друкар. Напиши щось, що треба роздрукувати!")
 
-# Обробка повідомлень
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.lower()
-    keywords = ["друк", "роздрукувати", "принтер", "видрукувати"]
+# Реакція на ключові слова
+@dp.message()
+async def print_reaction(message: Message):
+    keywords = ['роздрукувати', 'друк', 'принтер', 'видрукувати']
+    msg_text = message.text.lower()
 
-    if any(word in text for word in keywords):
-        username = update.message.from_user.username
-        if username:
-            await update.message.reply_text(f"👤 Твій username: @{username}")
-        else:
-            name = update.message.from_user.first_name
-            await update.message.reply_text(f"👤 Привіт, {name}! У тебе немає username 😅")
-    else:
-        await update.message.reply_text("Я реагую тільки на слова про друк 🖨️")
+    if any(keyword in msg_text for keyword in keywords):
+        username = message.from_user.username or "Невідомо"
+        await message.reply(f"🖨️ Запит на друк від: @{username}")
 
-# Основна функція
+# Запуск бота
 async def main():
-    app = ApplicationBuilder().token(os.environ["BOT_TOKEN"]).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    print("✅ Бот запущено. Очікую повідомлення...")
-    await app.run_polling()
+    print("✅ Бот запущено")
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    try:
+        asyncio.get_event_loop().run_until_complete(main())
+    except (KeyboardInterrupt, SystemExit):
+        print("❌ Бот зупинено")
