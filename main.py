@@ -1,26 +1,28 @@
-import os
 import asyncio
+import logging
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import nest_asyncio
 
-TOKEN = os.getenv("TOKEN")
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
-TRIGGER_WORDS = ["роздрукувати", "видрукувати", "друк", "принтер"]
+# Команда /start
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("Привіт! Я Telegram-бот.")
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message and update.message.text:
-        text = update.message.text.lower()
-        if any(word in text for word in TRIGGER_WORDS):
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text="З друком допоможе @Viperiukr"
-            )
-
+# Основна функція
 async def main():
-    app_bot = ApplicationBuilder().token(TOKEN).build()
-    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app_bot = ApplicationBuilder().token("7695005663:AAGh_s9JjLEpVVZrv5VVEHE7Hg3z8Z8pSzc").build()
+
+    app_bot.add_handler(CommandHandler("start", start))
+
     print("✅ Бот запущено. Очікую повідомлення...")
     await app_bot.run_polling()
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# Запуск з урахуванням активного event loop
+if __name__ == '__main__':
+    nest_asyncio.apply()
+    asyncio.get_event_loop().run_until_complete(main())
