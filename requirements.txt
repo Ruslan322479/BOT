@@ -1,3 +1,5 @@
 python-telegram-bot==20.6
 Flask
 nest_asyncio
+aiogram==2.25.1
+python-dotenv
