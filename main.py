@@ -1,28 +1,36 @@
-import asyncio
-import logging
+import os
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-import nest_asyncio
-
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
 
 # Команда /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Привіт! Я Telegram-бот.")
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("👋 Привіт! Напиши щось про друк, і я зреагую!")
+
+# Обробка повідомлень
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.lower()
+    keywords = ["друк", "роздрукувати", "принтер", "видрукувати"]
+
+    if any(word in text for word in keywords):
+        username = update.message.from_user.username
+        if username:
+            await update.message.reply_text(f"👤 Твій username: @{username}")
+        else:
+            name = update.message.from_user.first_name
+            await update.message.reply_text(f"👤 Привіт, {name}! У тебе немає username 😅")
+    else:
+        await update.message.reply_text("Я реагую тільки на слова про друк 🖨️")
 
 # Основна функція
 async def main():
-    app_bot = ApplicationBuilder().token("7695005663:AAGh_s9JjLEpVVZrv5VVEHE7Hg3z8Z8pSzc").build()
+    app = ApplicationBuilder().token(os.environ["BOT_TOKEN"]).build()
 
-    app_bot.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("✅ Бот запущено. Очікую повідомлення...")
-    await app_bot.run_polling()
+    await app.run_polling()
 
-# Запуск з урахуванням активного event loop
-if __name__ == '__main__':
-    nest_asyncio.apply()
-    asyncio.get_event_loop().run_until_complete(main())
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
